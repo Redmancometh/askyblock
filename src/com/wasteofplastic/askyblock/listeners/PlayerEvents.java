@@ -354,15 +354,8 @@ public class PlayerEvents implements Listener {
         //plugin.getLogger().info("DEBUG: From : " + e.getFrom());
         //plugin.getLogger().info("DEBUG: To : " + e.getTo());
         // Teleporting to a locked island
-        if (DEBUG)
-            plugin.getLogger().info("DEBUG: getting islands for to from");
         Island islandFrom = plugin.getGrid().getProtectedIslandAt(e.getFrom());
-        if (DEBUG && islandFrom != null)
-            plugin.getLogger().info("DEBUG: islandFrom is not null");
         Island islandTo = plugin.getGrid().getProtectedIslandAt(e.getTo());
-        if (DEBUG && islandTo != null)
-            plugin.getLogger().info("DEBUG: islandTo is not null");
-
         // Ender pearl and chorus fruit teleport checks
         if (e.getCause() != null) {
             if (e.getCause().equals(TeleportCause.ENDER_PEARL)) {
