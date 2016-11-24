@@ -124,9 +124,9 @@ public class ASkyBlockAPI
      * @param playerUUID
      * @return true if player has an island, false if not
      */
-    public boolean calculateIslandLevel(UUID playerUUID)
+    public boolean calculateIslandLevel(UUID playerUUID, Environment env)
     {
-        if (plugin.getPlayers().inTeam(playerUUID) && !plugin.getPlayers().hasIsland(playerUUID))
+        if (plugin.getPlayers().inTeam(playerUUID) && !plugin.getPlayers().hasIsland(playerUUID, env))
         {
             new LevelCalcByChunk(plugin, playerUUID, null, false);
             return true;
@@ -213,9 +213,9 @@ public class ASkyBlockAPI
      * @param playerUUID
      * @return true if player has an island, false if the player does not.
      */
-    public boolean hasIsland(UUID playerUUID)
+    public boolean hasIsland(UUID playerUUID, Environment env)
     {
-        return plugin.getPlayers().hasIsland(playerUUID);
+        return plugin.getPlayers().hasIsland(playerUUID, env);
     }
 
     /**

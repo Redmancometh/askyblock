@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
 
 import com.google.common.collect.Lists;
@@ -176,9 +177,10 @@ public class PlayerCache {
      * 
      * @param playerUUID
      *            - string name of player
+     * @param env 
      * @return true if player has island
      */
-    public boolean hasIsland(final UUID playerUUID) {
+    public boolean hasIsland(final UUID playerUUID, Environment env) {
         addPlayer(playerUUID);
         // plugin.getLogger().info("DEBUG: hasIsland = " + playerUUID.toString()
         // + " = " + playerCache.get(playerUUID).hasIsland());

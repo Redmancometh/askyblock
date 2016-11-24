@@ -990,7 +990,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     else
                     {
                         // Check if this player has an island
-                        if (!plugin.getPlayers().hasIsland(playerUUID) && !plugin.getPlayers().inTeam(playerUUID))
+                        if (!plugin.getPlayers().hasIsland(playerUUID, ((Player) sender).getWorld().getEnvironment()) && !plugin.getPlayers().inTeam(playerUUID))
                         {
                             // No island
                             sender.sendMessage(ChatColor.RED + plugin.myLocale().errorNoIslandOther);
@@ -1081,7 +1081,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     else
                     {
                         // Check if this player has an island
-                        if (!plugin.getPlayers().hasIsland(playerUUID) && !plugin.getPlayers().inTeam(playerUUID))
+                        if (!plugin.getPlayers().hasIsland(playerUUID, ((Player) sender).getWorld().getEnvironment()) && !plugin.getPlayers().inTeam(playerUUID))
                         {
                             // No island
                             sender.sendMessage(ChatColor.RED + plugin.myLocale().errorNoIslandOther);
@@ -1104,7 +1104,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     else
                     {
                         // Check if this player has an island
-                        if (!plugin.getPlayers().hasIsland(playerUUID) && !plugin.getPlayers().inTeam(playerUUID))
+                        if (!plugin.getPlayers().hasIsland(playerUUID, ((Player) sender).getWorld().getEnvironment()) && !plugin.getPlayers().inTeam(playerUUID))
                         {
                             // No island
                             sender.sendMessage(ChatColor.RED + plugin.myLocale().errorNoIslandOther);
@@ -1141,7 +1141,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     else
                     {
                         // Check if this player has an island
-                        if (!plugin.getPlayers().hasIsland(playerUUID) && !plugin.getPlayers().inTeam(playerUUID))
+                        if (!plugin.getPlayers().hasIsland(playerUUID, player.getWorld().getEnvironment()) && !plugin.getPlayers().inTeam(playerUUID))
                         {
                             // No island
                             player.sendMessage(ChatColor.RED + plugin.myLocale(player.getUniqueId()).errorNoIslandOther);
@@ -1529,7 +1529,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     }
                     else
                     {
-                        if (plugin.getPlayers().hasIsland(targetUUID) || plugin.getPlayers().inTeam(targetUUID))
+                        if (plugin.getPlayers().hasIsland(targetUUID, player.getWorld().getEnvironment()) || plugin.getPlayers().inTeam(targetUUID))
                         {
                             // Teleport to the over world
                             Location warpSpot = plugin.getPlayers().getIslandLocation(targetUUID).toVector().toLocation(ASkyBlock.getIslandWorld());
@@ -1571,7 +1571,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     }
                     else
                     {
-                        if (plugin.getPlayers().hasIsland(targetUUID) || plugin.getPlayers().inTeam(targetUUID))
+                        if (plugin.getPlayers().hasIsland(targetUUID, player.getWorld().getEnvironment()) || plugin.getPlayers().inTeam(targetUUID))
                         {
                             // Teleport to the nether
                             Location warpSpot = plugin.getPlayers().getIslandLocation(targetUUID).toVector().toLocation(ASkyBlock.getNetherWorld());
@@ -2076,7 +2076,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                         return true;
                     }
                     // See if leader has an island
-                    if (!plugin.getPlayers().hasIsland(teamLeader))
+                    if (!plugin.getPlayers().hasIsland(teamLeader, ((Player) sender).getWorld().getEnvironment()))
                     {
                         sender.sendMessage(ChatColor.RED + plugin.myLocale().adminTeamAddLeaderNoIsland);
                         return true;
@@ -2103,7 +2103,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                         targetPlayer.performCommand(Settings.ISLANDCOMMAND + " decline");
                     }
                     // If the invitee has an island of their own
-                    if (plugin.getPlayers().hasIsland(playerUUID))
+                    if (plugin.getPlayers().hasIsland(playerUUID, ((Player) sender).getWorld().getEnvironment()))
                     {
                         Location islandLoc = plugin.getPlayers().getIslandLocation(playerUUID);
                         if (islandLoc != null)
@@ -2142,7 +2142,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
                     // Teleport the player if they are online
                     if (targetPlayer != null)
                     {
-                        plugin.getGrid().homeTeleport(targetPlayer);
+                        plugin.getGrid().homeTeleport(targetPlayer, targetPlayer.getWorld().getEnvironment());
                     }
                     plugin.getGrid().saveGrid();
                     return true;
@@ -2398,7 +2398,7 @@ public class AdminCmd implements CommandExecutor, TabCompleter
         else
         {
             sender.sendMessage(ChatColor.YELLOW + plugin.myLocale().errorNoTeam);
-            if (plugin.getPlayers().hasIsland(playerUUID))
+            if (plugin.getPlayers().hasIsland(playerUUID, ((Player) sender).getWorld().getEnvironment()))
             {
                 islandLoc = plugin.getPlayers().getIslandLocation(playerUUID);
             }

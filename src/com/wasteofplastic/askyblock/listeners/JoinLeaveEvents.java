@@ -126,7 +126,7 @@ public class JoinLeaveEvents implements Listener
 
         // If this player is not an island player just skip all this
         if (DEBUG) plugin.getLogger().info("DEBUG: checking if player has island or is in team");
-        if (!players.hasIsland(playerUUID) && !players.inTeam(playerUUID))
+        if (!players.hasIsland(playerUUID, event.getPlayer().getWorld().getEnvironment()) && !players.inTeam(playerUUID))
         {
             if (DEBUG) plugin.getLogger().info("DEBUG: not in team and does not have island");
             return;
@@ -148,7 +148,7 @@ public class JoinLeaveEvents implements Listener
         // Rationalize any out-of-sync issues, which may occur if the server wasn't shutdown properly, etc.
         // Leader or solo
         if (DEBUG) plugin.getLogger().info("DEBUG: Getting island info");
-        if (players.hasIsland(playerUUID))
+        if (players.hasIsland(playerUUID, player.getWorld().getEnvironment()))
         {
             if (DEBUG) plugin.getLogger().info("DEBUG: owner");
             loc = players.getIslandLocation(playerUUID);
@@ -342,7 +342,7 @@ public class JoinLeaveEvents implements Listener
             {
                 if (DEBUG) plugin.getLogger().info("DEBUG: No bypass - teleporting");
                 player.sendMessage(ChatColor.RED + plugin.myLocale(playerUUID).lockIslandLocked);
-                plugin.getGrid().homeTeleport(player);
+                plugin.getGrid().homeTeleport(player,player.getWorld().getEnvironment());
             }
         }
         if (DEBUG) plugin.getLogger().info("DEBUG: Setting the player's level in chat listener");

@@ -1433,9 +1433,9 @@ public class GridManager
      * @param player
      * @return true if the home teleport is successful
      */
-    public boolean homeTeleport(final Player player)
+    public boolean homeTeleport(final Player player, Environment env)
     {
-        return homeTeleport(player, 1);
+        return homeTeleport(player, 1, env);
     }
 
     /**
@@ -1443,9 +1443,10 @@ public class GridManager
      * find a safe place.
      * @param player
      * @param number - home location to do to
+     * @param env 
      * @return true if successful, false if not
      */
-    public boolean homeTeleport(final Player player, int number)
+    public boolean homeTeleport(final Player player, int number, Environment env)
     {
         Location home = null;
         //plugin.getLogger().info("home teleport called for #" + number);
@@ -1566,7 +1567,7 @@ public class GridManager
         // Not in the grid, so do it the old way
         // Make a list of test locations and test them
         Set<Location> islandTestLocations = new HashSet<Location>();
-        if (plugin.getPlayers().hasIsland(player.getUniqueId()))
+        if (plugin.getPlayers().hasIsland(player.getUniqueId(), player.getWorld().getEnvironment()))
         {
             islandTestLocations.add(plugin.getPlayers().getIslandLocation(player.getUniqueId()));
         }
@@ -1663,7 +1664,7 @@ public class GridManager
     {
         // Make a list of test locations and test them
         Set<Location> islandTestLocations = new HashSet<Location>();
-        if (plugin.getPlayers().hasIsland(player.getUniqueId()))
+        if (plugin.getPlayers().hasIsland(player.getUniqueId(), (player).getWorld().getEnvironment()))
         {
             islandTestLocations.add(plugin.getPlayers().getIslandLocation(player.getUniqueId()));
             // If new Nether
@@ -1793,9 +1794,9 @@ public class GridManager
      * @param newOwner
      * @return true if successful
      */
-    public boolean transferIsland(final UUID oldOwner, final UUID newOwner)
+    public boolean transferIsland(final UUID oldOwner, final UUID newOwner, Environment env)
     {
-        if (plugin.getPlayers().hasIsland(oldOwner))
+        if (plugin.getPlayers().hasIsland(oldOwner, env))
         {
             Location islandLoc = plugin.getPlayers().getIslandLocation(oldOwner);
             plugin.getPlayers().setHasIsland(newOwner, true);
@@ -1887,10 +1888,10 @@ public class GridManager
             {
                 //plugin.getLogger().info("DEBUG: in island space");
                 // Teleport island players to their island home
-                if (!player.getUniqueId().equals(uuid) && (plugin.getPlayers().hasIsland(player.getUniqueId()) || plugin.getPlayers().inTeam(player.getUniqueId())))
+                if (!player.getUniqueId().equals(uuid) && (plugin.getPlayers().hasIsland(player.getUniqueId(), player.getWorld().getEnvironment()) || plugin.getPlayers().inTeam(player.getUniqueId())))
                 {
                     //plugin.getLogger().info("DEBUG: home teleport");
-                    homeTeleport(player);
+                    homeTeleport(player, player.getWorld().getEnvironment());
                 }
                 else
                 {
