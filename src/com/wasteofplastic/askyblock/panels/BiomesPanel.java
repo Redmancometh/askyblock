@@ -164,7 +164,7 @@ public class BiomesPanel implements Listener {
             // plugin.getLogger().info("DEBUG: slot is " + slot);
             // Do something
             // Check this player has an island
-            Island island = plugin.getGrid().getIsland(playerUUID);
+            Island island = plugin.getGrid().getIsland(playerUUID, event.getWhoClicked().getWorld().getEnvironment());
             if (island == null) {
                 player.sendMessage(ChatColor.RED + plugin.myLocale().errorNoIsland);
                 return;

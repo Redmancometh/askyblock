@@ -675,9 +675,11 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                 plugin.getPlayers().addTeamMember(teamLeader, teamLeader);
             }
             // Fire event
-            final Island island = plugin.getGrid().getIsland(teamLeader);
-            final IslandJoinEvent event = new IslandJoinEvent(playerUUID, island);
-            plugin.getServer().getPluginManager().callEvent(event);
+            plugin.getGrid().getOwnedIslands().get(playerUUID).forEach((island) ->
+            {
+                final IslandJoinEvent event = new IslandJoinEvent(playerUUID, island);
+                plugin.getServer().getPluginManager().callEvent(event);
+            });
         }
         return true;
     }
@@ -716,9 +718,12 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                 runCommands(Settings.leaveCommands, offlinePlayer);
             }
             // Fire event
-            final Island island = plugin.getGrid().getIsland(teamLeader);
-            final IslandLeaveEvent event = new IslandLeaveEvent(playerUUID, island);
-            plugin.getServer().getPluginManager().callEvent(event);
+            final Collection<Island> islands = plugin.getGrid().getOwnedIslands().get(offlinePlayer.getUniqueId());
+            islands.forEach((island) ->
+            {
+                final IslandLeaveEvent event = new IslandLeaveEvent(playerUUID, island);
+                plugin.getServer().getPluginManager().callEvent(event);
+            });
         }
         else
         {
@@ -902,7 +907,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
         // Clear the cleanstone flag so events can happen again
         plugin.setNewIsland(false);
         // Add to the grid
-        Island myIsland = plugin.getGrid().addIsland(next.getBlockX(), next.getBlockZ(), playerUUID);
+        Island myIsland = plugin.getGrid().addIsland(next.getBlockX(), next.getBlockZ(), playerUUID, player.getWorld().getEnvironment());
         myIsland.setLevelHandicap(schematic.getLevelHandicap());
         // Save the player so that if the server is reset weird things won't happen
         plugin.getPlayers().save(playerUUID);
@@ -1547,7 +1552,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                         return false;
                     }
                     pendingNewIslandSelection.remove(playerUUID);
-                    Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId());
+                    Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId(), player.getWorld().getEnvironment());
                     newIsland(player);
                     if (resettingIsland.contains(playerUUID))
                     {
@@ -1598,7 +1603,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                     }
                     // plugin.getLogger().info("DEBUG: perms ok");
                     // Find out which island they want to lock
-                    Island island = plugin.getGrid().getIsland(playerUUID);
+                    Island island = plugin.getGrid().getIsland(playerUUID, player.getWorld().getEnvironment());
                     if (island == null)
                     {
                         // plugin.getLogger().info("DEBUG: player has no island in grid");
@@ -1716,7 +1721,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                     if (Settings.useEconomy && Settings.useMinishop)
                     {
                         // Check island
-                        if (plugin.getGrid().getIsland(player.getUniqueId()) == null)
+                        if (plugin.getGrid().getIsland(player.getUniqueId(), player.getWorld().getEnvironment()) == null)
                         {
                             player.sendMessage(ChatColor.RED + plugin.myLocale(player.getUniqueId()).errorNoIsland);
                             return true;
@@ -1875,7 +1880,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                         // Get the schematics that this player is eligible to use
                         List<Schematic> schems = getSchematics(player, false);
                         //plugin.getLogger().info("DEBUG: size of schematics for this player = " + schems.size());
-                        Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId());
+                        Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId(), player.getWorld().getEnvironment());
                         if (schems.isEmpty())
                         {
                             // No schematics - use default island
@@ -1932,7 +1937,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                     if (VaultHelper.checkPerm(player, Settings.PERMPREFIX + "island.sethome"))
                     {
                         // Check island
-                        if (plugin.getGrid().getIsland(player.getUniqueId()) == null)
+                        if (plugin.getGrid().getIsland(player.getUniqueId(), player.getWorld().getEnvironment()) == null)
                         {
                             player.sendMessage(ChatColor.RED + plugin.myLocale(player.getUniqueId()).errorNoIsland);
                             return true;
@@ -2103,7 +2108,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                 {
                     if (VaultHelper.checkPerm(player, Settings.PERMPREFIX + "coop"))
                     {
-                        Island island = plugin.getGrid().getIsland(playerUUID);
+                        Island island = plugin.getGrid().getIsland(playerUUID, player.getWorld().getEnvironment());
                         boolean none = true;
                         for (UUID uuid : CoopPlay.getInstance().getCoopPlayers(island.getCenter()))
                         {
@@ -2318,7 +2323,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                             if (plugin.getPlayers().hasIsland(playerUUID))
                             {
                                 plugin.getLogger().info(player.getName() + "'s island will be deleted because they joined a party.");
-                                plugin.deletePlayerIsland(playerUUID, true);
+                                plugin.deletePlayerIsland(playerUUID, true, player.getWorld().getEnvironment());
                                 plugin.getLogger().info("Island deleted.");
                             }
                             // Add the player to the team
@@ -2610,7 +2615,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                         // Check perm again
                         if (schematic.getPerm().isEmpty() || VaultHelper.checkPerm(player, schematic.getPerm()))
                         {
-                            Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId());
+                            Island oldIsland = plugin.getGrid().getIsland(player.getUniqueId(), player.getWorld().getEnvironment());
                             newIsland(player, schematic);
                             if (resettingIsland.contains(playerUUID))
                             {
@@ -2762,7 +2767,7 @@ public class IslandCmd implements CommandExecutor, TabCompleter
                 {
                     if (VaultHelper.checkPerm(player, Settings.PERMPREFIX + "island.sethome"))
                     {
-                        Island island = plugin.getGrid().getIsland(playerUUID);
+                        Island island = plugin.getGrid().getIsland(playerUUID, player.getWorld().getEnvironment());
                         if (island == null)
                         {
                             // plugin.getLogger().info("DEBUG: player has no island in grid");

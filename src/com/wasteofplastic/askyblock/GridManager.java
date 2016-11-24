@@ -20,9 +20,11 @@ package com.wasteofplastic.askyblock;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -33,6 +35,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World.Environment;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -46,6 +49,8 @@ import org.bukkit.material.SimpleAttachableMaterialData;
 import org.bukkit.material.TrapDoor;
 import org.bukkit.util.Vector;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.wasteofplastic.askyblock.Island.Flags;
 import com.wasteofplastic.askyblock.util.Util;
 
@@ -65,8 +70,7 @@ public class GridManager
     // private TreeMap<Integer,TreeMap<Integer,PlayerIsland>> protectionGrid = new
     // TreeMap<Integer,TreeMap<Integer,PlayerIsland>>();
     // Reverse lookup for owner, if they exists
-    private HashMap<UUID, Island> ownershipMap = new HashMap<UUID, Island>();
-    private HashMap<UUID, Island> netherOwnershipMap = new HashMap();
+    private Multimap<UUID, Island> ownershipMap = HashMultimap.create();
     private File islandFile;
     private Island spawn;
     private File islandNameFile;
@@ -202,7 +206,7 @@ public class GridManager
                 Location spawnLoc = Util.getLocationString(spawn.getString("spawn.bedrock", ""));
                 if (spawnLoc != null && onGrid(spawnLoc))
                 {
-                    Island newIsland = addIsland(spawnLoc.getBlockX(), spawnLoc.getBlockZ());
+                    Island newIsland = addIsland(spawnLoc.getBlockX(), spawnLoc.getBlockZ(), Environment.NORMAL);
                     setSpawn(newIsland);
                     newIsland.setProtectionSize(range);
                 }
@@ -314,7 +318,7 @@ public class GridManager
                                         String ownerString = fileName.substring(0, fileName.length() - 4);
                                         // Add the island
                                         UUID owner = UUID.fromString(ownerString);
-                                        Island newIsland = addIsland(islandLoc.getBlockX(), islandLoc.getBlockZ(), owner);
+                                        Island newIsland = addIsland(islandLoc.getBlockX(), islandLoc.getBlockZ(), owner, islandLoc.getWorld().getEnvironment());
                                         ownershipMap.put(owner, newIsland);
                                         // Grab when this was last updated
                                         newIsland.setUpdatedDate(f.lastModified());
@@ -474,7 +478,7 @@ public class GridManager
                             // Note that this is the CENTER of the island
                             if (getIslandAt(x, z) == null)
                             {
-                                addIsland(x, z);
+                                addIsland(x, z, Util.getLocationString(playerFile.getString("islandLocation")).getWorld().getEnvironment());
                                 if (count2 % 1000 == 0)
                                 {
                                     plugin.getLogger().info("Converted " + count + " islands");
@@ -691,9 +695,9 @@ public class GridManager
      * @param x
      * @param z
      */
-    public Island addIsland(int x, int z)
+    public Island addIsland(int x, int z, Environment env)
     {
-        return addIsland(x, z, null);
+        return addIsland(x, z, env);
     }
 
     /**
@@ -703,67 +707,31 @@ public class GridManager
      * @param z
      * @param owner
      */
-    public Island addNetherIsland(int x, int z, Player owner)
+    public Island addIsland(int x, int z, UUID owner, Environment environment)
     {
         // Check if this owner already has an island
         if (ownershipMap.containsKey(owner))
         {
             // Island exists
-            Island island = netherOwnershipMap.get(owner);
+            Collection<Island> islands = ownershipMap.get(owner);
             // Remove island if the player already has a different one
-            if (island.getCenter().getBlockX() != x || island.getCenter().getBlockZ() != z)
+            for (Island island : islands)
             {
-                //plugin.getLogger().warning(
-                //"Island at " + island.getCenter().getBlockX() + ", " + island.getCenter().getBlockZ()
-                //+ " is already owned by this player. Removing ownership of this island.");
-                island.setOwner(null);
-                netherOwnershipMap.remove(owner);
-            }
-            else
-            {
-                // Player already has island
-                addToGridsNether(island);
-                return island;
-            }
-        }
-        // plugin.getLogger().info("DEBUG: adding island to grid at " + x + ", "
-        // + z + " for " + owner.toString());
-        Island newIsland = new Island(plugin, x, z, owner.getUniqueId());
-        // if (newIsland != null) {
-        // plugin.getLogger().info("DEBUG: new island is good");
-        // }
-        addToGrids(newIsland);
-        return newIsland;
-    }
-
-    /**
-     * Adds an island to the islandGrid with the center point x,z owner UUID
-     * 
-     * @param x
-     * @param z
-     * @param owner
-     */
-    public Island addIsland(int x, int z, UUID owner)
-    {
-        // Check if this owner already has an island
-        if (ownershipMap.containsKey(owner))
-        {
-            // Island exists
-            Island island = ownershipMap.get(owner);
-            // Remove island if the player already has a different one
-            if (island.getCenter().getBlockX() != x || island.getCenter().getBlockZ() != z)
-            {
-                //plugin.getLogger().warning(
-                //"Island at " + island.getCenter().getBlockX() + ", " + island.getCenter().getBlockZ()
-                //+ " is already owned by this player. Removing ownership of this island.");
-                island.setOwner(null);
-                ownershipMap.remove(owner);
-            }
-            else
-            {
-                // Player already has island
-                addToGrids(island);
-                return island;
+                if (environment != island.getCenter().getWorld().getEnvironment()) continue;
+                if (island.getCenter().getBlockX() != x || island.getCenter().getBlockZ() != z)
+                {
+                    //plugin.getLogger().warning(
+                    //"Island at " + island.getCenter().getBlockX() + ", " + island.getCenter().getBlockZ()
+                    //+ " is already owned by this player. Removing ownership of this island.");
+                    island.setOwner(null);
+                    ownershipMap.remove(owner, island);
+                }
+                else
+                {
+                    // Player already has island
+                    addToGrids(island);
+                    return island;
+                }
             }
         }
         // plugin.getLogger().info("DEBUG: adding island to grid at " + x + ", "
@@ -852,83 +820,27 @@ public class GridManager
     }
 
     /**
-     * Adds an island to the grid register
-     * @param newIsland
-     */
-    private void addToGridsNether(Island newIsland)
-    {
-        //plugin.getLogger().info("DEBUG: adding island to grid at " + newIsland.getMinX() + "," + newIsland.getMinZ());
-        if (newIsland.getOwner() != null)
-        {
-            netherOwnershipMap.put(newIsland.getOwner(), newIsland);
-        }
-        if (islandGrid.containsKey(newIsland.getMinX()))
-        {
-            //plugin.getLogger().info("DEBUG: min x is in the grid :" + newIsland.getMinX());
-            TreeMap<Integer, Island> zEntry = islandGrid.get(newIsland.getMinX());
-            if (zEntry.containsKey(newIsland.getMinZ()))
-            {
-                //plugin.getLogger().info("DEBUG: min z is in the grid :" + newIsland.getMinZ());
-                // Island already exists
-                Island conflict = islandGrid.get(newIsland.getMinX()).get(newIsland.getMinZ());
-                plugin.getLogger().warning("*** Duplicate or overlapping islands! ***");
-                plugin.getLogger().warning("Island at (" + newIsland.getCenter().getBlockX() + ", " + newIsland.getCenter().getBlockZ() + ") conflicts with (" + conflict.getCenter().getBlockX() + ", " + conflict.getCenter().getBlockZ() + ")");
-                if (conflict.getOwner() != null)
-                {
-                    plugin.getLogger().warning("Accepted island is owned by " + plugin.getPlayers().getName(conflict.getOwner()));
-                    plugin.getLogger().warning(conflict.getOwner().toString() + ".yml");
-                }
-                else
-                {
-                    plugin.getLogger().warning("Accepted island is unowned.");
-                }
-                if (newIsland.getOwner() != null)
-                {
-                    plugin.getLogger().warning("Denied island is owned by " + plugin.getPlayers().getName(newIsland.getOwner()));
-                    plugin.getLogger().warning(newIsland.getOwner().toString() + ".yml");
-                }
-                else
-                {
-                    plugin.getLogger().warning("Denied island is unowned and was just found in the islands folder. Skipping it...");
-                }
-                plugin.getLogger().warning("Recommend that the denied player file is deleted otherwise weird things can happen.");
-                return;
-            }
-            else
-            {
-                // Add island
-                //plugin.getLogger().info("DEBUG: added island to grid at " + newIsland.getMinX() + "," + newIsland.getMinZ());
-                zEntry.put(newIsland.getMinZ(), newIsland);
-                islandGrid.put(newIsland.getMinX(), zEntry);
-                // plugin.getLogger().info("Debug: " + newIsland.toString());
-            }
-        }
-        else
-        {
-            // Add island
-            //plugin.getLogger().info("DEBUG: added island to grid at " + newIsland.getMinX() + "," + newIsland.getMinZ());
-            TreeMap<Integer, Island> zEntry = new TreeMap<Integer, Island>();
-            zEntry.put(newIsland.getMinZ(), newIsland);
-            islandGrid.put(newIsland.getMinX(), zEntry);
-        }
-    }
-
-    /**
      * Deletes any island owned by owner from the grid. Does not actually remove the island
      * from the world. Used for cleaning up issues such as mismatches between player files
      * and island.yml
      * @param owner
      */
-    public void deleteIslandOwner(UUID owner)
+    public void deleteIslandOwner(UUID owner, Environment env)
     {
         if (owner != null && ownershipMap.containsKey(owner))
         {
-            Island island = ownershipMap.get(owner);
-            if (island != null)
+            Collection<Island> islands = ownershipMap.get(owner);
+            for (Island island : islands)
             {
-                island.setOwner(null);
+                if (island.getCenter().getWorld().getEnvironment() == env)
+                {
+                    if (island != null)
+                    {
+                        island.setOwner(null);
+                    }
+                    ownershipMap.remove(owner, island);
+                }
             }
-            ownershipMap.remove(owner);
         }
     }
 
@@ -972,7 +884,7 @@ public class GridManager
             {
                 if (ownershipMap.get(owner).equals(island))
                 {
-                    ownershipMap.remove(owner);
+                    ownershipMap.remove(owner, island);
                 }
             }
         }
@@ -989,19 +901,31 @@ public class GridManager
      * @param owner
      * @return island object or null if it does not exist in the list
      */
-    public Island getIsland(UUID owner)
+    public Island getIsland(UUID owner, Environment env)
     {
         if (owner != null)
         {
             if (ownershipMap.containsKey(owner))
             {
-                return ownershipMap.get(owner);
+                for (Island island : ownershipMap.values())
+                {
+                    if (island.getCenter().getWorld().getEnvironment() == env)
+                    {
+                        return island;
+                    }
+                }
             }
             // Try and get team islands
             UUID leader = plugin.getPlayers().getTeamLeader(owner);
             if (leader != null && ownershipMap.containsKey(leader))
             {
-                return ownershipMap.get(leader);
+                for (Island island : ownershipMap.get(leader))
+                {
+                    if (island.getCenter().getWorld().getEnvironment() == env)
+                    {
+                        return island;
+                    }
+                }
             }
         }
         return null;
@@ -1022,21 +946,27 @@ public class GridManager
         // ownership
         if (newOwner == null && oldOwner != null)
         {
-            ownershipMap.remove(oldOwner);
+            ownershipMap.remove(oldOwner, island);
             island.setOwner(null);
             return;
         }
         // Check if the new owner already has an island
         if (ownershipMap.containsKey(newOwner))
         {
-            Island oldIsland = ownershipMap.get(newOwner);
+            Collection<Island> islands = ownershipMap.get(newOwner);
+            for (Island oldIsland : islands)
+            {
+                if (oldIsland == island)
+                {
+                    oldIsland.setOwner(null);
+                }
+            }
             // plugin.getLogger().warning("Island at " +
             // oldIsland.getCenter().getBlockX() + ", " +
             // oldIsland.getCenter().getBlockZ()
             // +
             // " is already owned by this player. Removing ownership of this island.");
-            oldIsland.setOwner(null);
-            ownershipMap.remove(newOwner);
+            ownershipMap.remove(newOwner, island);
         }
         // Make the new owner own the island
         if (newOwner != null && island != null)
@@ -1047,7 +977,7 @@ public class GridManager
             if (oldOwner != null && ownershipMap.containsKey(oldOwner))
             {
                 // Remove the old entry
-                ownershipMap.remove(oldOwner);
+                ownershipMap.remove(oldOwner, island);
             }
             // Insert the new entry
             ownershipMap.put(newOwner, island);
@@ -1057,7 +987,7 @@ public class GridManager
     /**
      * @return the ownershipMap
      */
-    public HashMap<UUID, Island> getOwnershipMap()
+    public Multimap<UUID, Island> getOwnershipMap()
     {
         return ownershipMap;
     }
@@ -1151,7 +1081,7 @@ public class GridManager
             {
                 // Get the closest island 
                 plugin.getLogger().info("Found solid block at island height - adding to islands.yml " + px + "," + pz);
-                addIsland(px, pz);
+                addIsland(px, pz, loc.getWorld().getEnvironment());
                 return true;
             }
             // Look around
@@ -1165,7 +1095,7 @@ public class GridManager
                         if (!loc.getWorld().getBlockAt(x + px, y, z + pz).isEmpty() && !loc.getWorld().getBlockAt(x + px, y, z + pz).isLiquid())
                         {
                             plugin.getLogger().info("Solid block found during long search - adding to islands.yml " + px + "," + pz);
-                            addIsland(px, pz);
+                            addIsland(px, pz, loc.getWorld().getEnvironment());
                             return true;
                         }
                     }
@@ -2040,65 +1970,9 @@ public class GridManager
      * @return Hashmap of owned islands with owner UUID as a key
      * 
      */
-    public HashMap<UUID, Island> getOwnedIslands()
+    public Map<UUID, Collection<Island>> getOwnedIslands()
     {
-        return ownershipMap;
-    }
-
-    public boolean hasRegularIsland(Player p)
-    {
-        return ownershipMap.containsKey(p.getUniqueId());
-    }
-
-    public boolean hasRegularIsland(UUID p)
-    {
-        return ownershipMap.containsKey(p);
-    }
-
-    /**
-     * Gets 
-     * @param p
-     * @return
-     */
-    public OwnedIslandResult getAllOwnedIslands(Player p)
-    {
-        OwnedIslandResult result = new OwnedIslandResult(hasNetherIsland(p), hasRegularIsland(p));
-        if (result.hasNether()) result.setNetherIsland(getNetherIsland(p));
-        if (result.hasRegular()) result.setRegularIsland(getIsland(p.getUniqueId()));
-        return result;
-    }
-
-    /**
-     * Gets 
-     * @param uuid
-     * @return
-     */
-    public OwnedIslandResult getAllOwnedIslands(UUID uuid)
-    {
-        OwnedIslandResult result = new OwnedIslandResult(hasNetherIsland(uuid), hasRegularIsland(uuid));
-        if (result.hasNether()) result.setNetherIsland(getNetherIsland(uuid));
-        if (result.hasRegular()) result.setRegularIsland(getIsland(uuid));
-        return result;
-    }
-
-    public Island getNetherIsland(Player p)
-    {
-        return getNetherIsland(p.getUniqueId());
-    }
-
-    public Island getNetherIsland(UUID uuid)
-    {
-        return netherOwnershipMap.get(uuid);
-    }
-
-    public boolean hasNetherIsland(Player p)
-    {
-        return hasNetherIsland(p.getUniqueId());
-    }
-
-    public boolean hasNetherIsland(UUID uuid)
-    {
-        return netherOwnershipMap.containsKey(uuid);
+        return ownershipMap.asMap();
     }
 
     /**

@@ -30,6 +30,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.block.Biome;
@@ -630,12 +631,12 @@ public class ASkyBlock extends JavaPlugin {
 	 * @param removeBlocks
 	 *            - true to remove the island blocks
 	 */
-	public void deletePlayerIsland(final UUID player, boolean removeBlocks) {
+	public void deletePlayerIsland(final UUID player, boolean removeBlocks, Environment env) {
 		// Removes the island
 		//getLogger().info("DEBUG: deleting player island");
 		CoopPlay.getInstance().clearAllIslandCoops(player);
 		getWarpSignsListener().removeWarp(player);
-		Island island = grid.getIsland(player);
+		Island island = grid.getIsland(player, env);
 		if (island != null) {
 			if (removeBlocks) {
 				grid.removePlayersFromIsland(island, player);
